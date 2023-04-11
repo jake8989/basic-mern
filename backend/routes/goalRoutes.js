@@ -3,15 +3,18 @@ const router = express.Router();
 const asyncHandler = require('express-async-handler');
 const app = express();
 const Goal = require('../models/goals');
+const { protect } = require('../middleware/auth');
 router.get(
 	'/',
+	protect,
 	asyncHandler(async (req, res) => {
-		const goals = await Goal.find();
+		const goals = await Goal.find({ user: req.user.id });
 		res.json(goals);
 	})
 );
 router.post(
 	'/',
+	protect,
 	asyncHandler(async (req, res) => {
 		if (!req.body.text) {
 			res.status(400);
@@ -19,6 +22,7 @@ router.post(
 		}
 		const goals = await Goal.create({
 			text: req.body.text,
+			user: req.user.id,
 		});
 
 		res.json(goals);
@@ -27,6 +31,7 @@ router.post(
 );
 router.put(
 	'/:id',
+	protect,
 	asyncHandler(async (req, res) => {
 		const goals = await Goal.findById(req.params.id);
 		if (!goals) {
@@ -41,6 +46,7 @@ router.put(
 );
 router.delete(
 	'/:id',
+	protect,
 	asyncHandler(async (req, res) => {
 		const goals = await Goal.findById(req.params.id);
 		if (!goals) {

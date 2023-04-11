@@ -7,7 +7,12 @@ const bcrypt = require('bcryptjs');
 const app = express;
 const router = express.Router();
 const User = require('../models/users');
-
+const { protect } = require('../middleware/auth');
+const generateToken = (id) => {
+	return jwt.sign({ id }, process.env.JWT_SECRET, {
+		expiresIn: '30d',
+	});
+};
 router.post(
 	'/',
 	asyncHandler(async (req, res) => {
@@ -31,6 +36,7 @@ router.post(
 				name: users.name,
 				password: users.password,
 				email: users.email,
+				token: generateToken(users._id),
 			});
 		} else {
 			res.status(400);
@@ -45,7 +51,10 @@ router.post(
 		const { email, password } = req.body;
 		const user = await User.findOne({ email });
 		if (user && (await bcrypt.compare(password, user.password))) {
-			res.status(200).json({ message: 'logged in Succesfully' });
+			res.status(200).json({
+				message: 'logged in Succesfully',
+				token: generateToken(user._id),
+			});
 		} else {
 			res.status(400);
 
@@ -56,6 +65,7 @@ router.post(
 );
 router.get(
 	'/me',
+	protect,
 	asyncHandler(async (req, res) => {
 		res.json({ message: 'user data' });
 	})
